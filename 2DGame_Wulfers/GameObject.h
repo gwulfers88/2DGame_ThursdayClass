@@ -1,4 +1,10 @@
+
+#if EMACS
+#include "..\deps\include\SDL\SDL.h"
+#else
 #include <SDL.h>
+#endif
+
 #include <string>
 #include <unordered_map>
 
@@ -15,59 +21,59 @@ class PhysicsManager;
 //GameObject class
 class GameObject
 {
-	friend Manager;
-	friend PhysicsObject;
-	friend PhysicsManager;
+    friend Manager;
+    friend PhysicsObject;
+    friend PhysicsManager;
 
 public:
-	GameObject(void);
-	~GameObject(void);
+    GameObject(void);
+    ~GameObject(void);
 
-	virtual void Init(std::string txtfile, SDL_Rect* dest=nullptr);
-	virtual b32 Update();
+    virtual void Init(std::string txtfile, SDL_Rect* dest=nullptr);
+    virtual b32 Update();
 
-	virtual void Render();
+    virtual void Render();
 #if _DEBUG
-	void DebugRender();
+    void DebugRender();
 #endif
-	virtual void Move(i32 action);
+    virtual void Move(i32 action);
 
-	//virtual bool Collide(GameObject* other);
-	//virtual void HandleCollision(GameObject* other);
+    //virtual bool Collide(GameObject* other);
+    //virtual void HandleCollision(GameObject* other);
 
-	b32 active;
+    b32 active;
 
 protected:
-	virtual void UpdateAnimation();
-	void OrbitTarget();
+    virtual void UpdateAnimation();
+    void OrbitTarget();
 
-	PhysicsObject* phys_obj;
+    PhysicsObject* phys_obj;
 
-	SDL_Surface* surf;
-	SDL_Texture* img;
-	SDL_Rect	 pos;
+    SDL_Surface* surf;
+    SDL_Texture* img;
+    SDL_Rect     pos;
 
-	//target
-	GameObject* target;
-	Vec2 offset;
+    //target
+    GameObject* target;
+    Vec2 offset;
 
-	r32 speed;
-	r32 mass;
-	r32 angle;
+    r32 speed;
+    r32 mass;
+    r32 angle;
 
-	Vec2 position;
-	Vec2 velocity;
-	Vec2 accel;
+    Vec2 position;
+    Vec2 velocity;
+    Vec2 accel;
 
-	//animation stuff
-	SDL_Rect	 clip;
-	i32			 frame;
-	
-	string state;
+    //animation stuff
+    SDL_Rect     clip;
+    i32          frame;
+    
+    string state;
 
-	//timer
-	u32		prev;
-	r32		dt;
-	r32		timer;
+    //timer
+    u32     prev;
+    r32     dt;
+    r32     timer;
 };
 
