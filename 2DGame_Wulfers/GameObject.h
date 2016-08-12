@@ -11,6 +11,14 @@ class Manager;
 class PhysicsObject;
 class PhysicsManager;
 
+enum ComboType
+{
+	NONE = 0x00,
+	DASH_RIGHT = 0x01,
+	DASH_LEFT = 0x10,
+	ORBIT = 0x100,
+};
+
 //GameObject class
 class GameObject
 {
@@ -30,19 +38,24 @@ public:
     void DebugRender();
 #endif
     virtual void Move(i32 action);
-
+	void FollowTarget();
     //virtual bool Collide(GameObject* other);
     //virtual void HandleCollision(GameObject* other);
 
     b32 active;
 
 protected:
+	void PerformDash(Vec2 dir);
+
     virtual void UpdateAnimation();
     void OrbitTarget();
 
     PhysicsObject* phys_obj;
 	
 	b32 isControlled;
+	b32 isOrbiting;
+
+	ComboType comboType;
 
     SDL_Surface* surf;
     SDL_Texture* img;

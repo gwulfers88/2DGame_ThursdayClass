@@ -20,7 +20,8 @@ GameObject::GameObject(void)
 	, timer(0)
 	, isControlled(false)
 {
-	
+	comboType = NONE;
+	isOrbiting = false;
 }
 
 GameObject::~GameObject(void)
@@ -49,11 +50,13 @@ b32 GameObject::Update()
 
 	Keys dashRight = { KEYS::RIGHT, KEYS::RIGHT, KEYS::LEFT, KEYS::RIGHT };
 	Keys dashLeft = { KEYS::LEFT, KEYS::LEFT, KEYS::RIGHT, KEYS::LEFT };
+	Keys orbit = { KEYS::RIGHT, KEYS::UP, KEYS::RIGHT, KEYS::SPACE };
 
 	const Combos combos =
 	{
 		Combo(dashRight, "Dash Right"),
-		Combo(dashLeft, "Dash Left")
+		Combo(dashLeft, "Dash Left"),
+		Combo(orbit, "Orbit")
 	};
 
     if (!active)
@@ -63,27 +66,99 @@ b32 GameObject::Update()
 
     Vec2 dirToTarget = {1, 0};
 
-	for ( const Combo& combo : combos )
+	if (isControlled)
 	{
-		const Keys& move = combo.first;
-		const string& action = combo.second;
-
-		if (Manager::match(Manager::inputHistory, move, 4))
+		for (const Combo& combo : combos)
 		{
-			Manager::inputHistory.clear();
-			cout << "move applied: " << action << endl;
+			const Keys& move = combo.first;
+			const string& action = combo.second;
+
+			if (Manager::inputHistory.size() >= combo.first.size())
+			{
+				if (Manager::match(Manager::inputHistory, move, 10))
+				{
+					Manager::inputHistory.clear();
+					cout << "move applied: " << action << endl;
+					
+					if (action == "Dash Right")
+					{
+						comboType = DASH_RIGHT;
+					}
+					else if (action == "Dash Left")
+					{
+						comboType = DASH_LEFT;
+					}
+
+					break;
+				}
+				else
+				{
+					cout << "no moves applied: " << endl;
+				}
+			}
+		}
+
+		switch (comboType)
+		{
+		case DASH_RIGHT:
+			PerformDash(Vec2(1.0f, 0.0f));
+			break;
+
+		case DASH_LEFT:
+			PerformDash(Vec2(-1.0f, 0.0f));
 			break;
 		}
-		else
+	}
+	else
+	{
+		for (const Combo& combo : combos)
 		{
-			cout << "no moves applied: " << endl;
+			const Keys& move = combo.first;
+			const string& action = combo.second;
+
+			if (Manager::inputHistory.size() >= combo.first.size())
+			{
+				if (Manager::match(Manager::inputHistory, move, 10))
+				{
+					Manager::inputHistory.clear();
+					cout << "move applied: " << action << endl;
+
+					if (action == "Orbit")
+					{
+						comboType = ORBIT;
+					}
+
+					break;
+				}
+				else
+				{
+					cout << "no moves applied: " << endl;
+				}
+			}
 		}
+
+		switch (comboType)
+		{
+		case ORBIT:
+			isOrbiting = true;
+			break;
+		}
+
+		if (isOrbiting)
+			OrbitTarget();
+		else
+			FollowTarget();
 	}
 
-    OrbitTarget();
     UpdateAnimation();
     
     return false;
+}
+
+void GameObject::PerformDash(Vec2 dir)
+{
+	position = dir * (speed * 10) * dt + position;
+	comboType = NONE;
 }
 
 void GameObject::OrbitTarget()
@@ -104,15 +179,13 @@ void GameObject::OrbitTarget()
     float rotateAngle = (offset.th + angle) * (r32)M_PI / 180.0f;
 
     //HOMEWORK: Find targets pivot based on rotation.
-    Vec2 pivot = target->position - (Vec2(pos.w, pos.h) * 0.5f);
+    Vec2 pivot = target->position - (Vec2(target->pos.w, target->pos.h) * 0.5f);
 
     Vec2 center;
     center.x = offset.r * cos(rotateAngle) + pivot.x;
     center.y = offset.r * sin(rotateAngle) + pivot.y;
 	
-	position = pivot;
-
-    //position = center - (Vec2((r32)pos.w, (r32)pos.h) * 0.5f);
+    position = center + (Vec2((r32)pos.w, (r32)pos.h) * 0.5f);
 }
 
 void GameObject::Render()
@@ -122,6 +195,7 @@ void GameObject::Render()
     pos.y = (i32)position.y - (i32)(pos.h * 0.5f);
 
     SDL_SetRenderDrawColor(Manager::renderer, 0, 0, 0, 255);
+
     if (active)
         Manager::RenderTextureEx( img, nullptr, &pos, angle, 0);
 }
@@ -145,25 +219,36 @@ void GameObject::Move(i32 direction)
 		if (isControlled)
 		{
 			Manager::inputHistory.push_back(direction);
-		}
+			position = Vec2(0, -1) * speed * 0.5f * dt + position;
+		}		
 	}
     if (direction & KEYS::DOWN)
 	{
 		if (isControlled)
 		{
 			Manager::inputHistory.push_back(direction);
-		}
+			position = Vec2(0, 1) * speed * 0.5f * dt + position;
+		}		
 	}
     if (direction & KEYS::LEFT)
 	{
 		if (isControlled)
 		{
 			Manager::inputHistory.push_back(direction);
-		}
+			position = Vec2(-1, 0) * speed * 0.5f * dt + position;
+		}		
 	}
     if (direction & KEYS::RIGHT)
 	{
 		if (isControlled)
+		{
+			Manager::inputHistory.push_back(direction);
+			position = Vec2(1, 0) * speed * 0.5f * dt + position;
+		}	
+	}
+	if (direction & KEYS::SPACE)
+	{
+		//if (isControlled)
 		{
 			Manager::inputHistory.push_back(direction);
 		}
@@ -180,24 +265,27 @@ void GameObject::UpdateAnimation()
     }
 }
 
-//dirToTarget = target->position - position;
+void GameObject::FollowTarget()
+{
+	Vec2 dirToTarget = target->position - position;
 
-////rotPoint->x = (int)dirToTarget.x + (int)(target->pos.w * 0.5f);
-////rotPoint->y = (int)dirToTarget.y + (int)(target->pos.h * 0.5f);
+	//rotPoint->x = (int)dirToTarget.x + (int)(target->pos.w * 0.5f);
+	//rotPoint->y = (int)dirToTarget.y + (int)(target->pos.h * 0.5f);
 
-//Normalize(&dirToTarget);
+	Normalize(&dirToTarget);
 
-//if (MagnitudeSqr(target->position - position) > Square(80))
-//{
-//  accel = dirToTarget * speed;
-//  accel = accel + (-1.5f * velocity);
+	if (MagnitudeSqr(target->position - position) > Square(80))
+	{
+	  accel = dirToTarget * speed;
+	  accel = accel + (-1.5f * velocity);
 
-//  Vec2 newPos = position;
-//  newPos = (0.5f * accel) * Square(dt) + velocity * dt + position;
-//  velocity = accel * dt + velocity;
+	  Vec2 newPos = position;
+	  newPos = (0.5f * accel) * Square(dt) + velocity * dt + position;
+	  velocity = accel * dt + velocity;
 
-//  position = newPos;
-//}
+	  position = newPos;
+	}
 
-/*printf("Accel { %.02f, %.02f } - Vel { %.02f, %.02f}\n", accel.x, accel.y,
-velocity.x, velocity.y);*/
+	/*printf("Accel { %.02f, %.02f } - Vel { %.02f, %.02f}\n", accel.x, accel.y,
+	velocity.x, velocity.y);*/
+}

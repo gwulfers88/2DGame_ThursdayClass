@@ -167,8 +167,8 @@ b32 Manager::Update()
         //GameObject mouse;
         //mouse.position = Vector2(mouse_pos.x, mouse_pos.y);
         //player->target = &mouse;
-        player->position.x = mouse_pos.x;
-        player->position.y = mouse_pos.y;
+        //player->position.x = mouse_pos.x;
+        //player->position.y = mouse_pos.y;
     }
 
     SDL_RenderClear( renderer );
@@ -226,7 +226,7 @@ bool Manager::match(const Keys& input, const Keys& move, int threshold)
 			return false;
 	}
 
-	return j >= 0;
+	return (i >= 0);
 }
 
 void Manager::Close()
