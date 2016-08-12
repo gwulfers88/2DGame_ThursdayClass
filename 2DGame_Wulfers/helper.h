@@ -1,5 +1,11 @@
 #pragma once
 
+#include <vector>
+#include <string>
+#include <unordered_map>
+
+using namespace std;
+
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
 
@@ -39,3 +45,8 @@ namespace KEYS
 }
 
 static const i32 FPS = 15;
+
+//Combos
+typedef vector<i32> Keys;
+typedef pair<Keys, string> Combo;
+typedef vector<Combo> Combos;

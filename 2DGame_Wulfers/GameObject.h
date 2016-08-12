@@ -1,14 +1,7 @@
-
-#if EMACS
-#include "..\deps\include\SDL\SDL.h"
-#else
-#include <SDL.h>
-#endif
-
+#include "Vec2.h"
 #include <string>
 #include <unordered_map>
-
-#include "Vec2.h"
+#include <SDL.h>
 
 #pragma once
 
@@ -48,6 +41,8 @@ protected:
     void OrbitTarget();
 
     PhysicsObject* phys_obj;
+	
+	b32 isControlled;
 
     SDL_Surface* surf;
     SDL_Texture* img;

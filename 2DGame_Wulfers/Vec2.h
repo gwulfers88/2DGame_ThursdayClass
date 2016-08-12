@@ -93,7 +93,7 @@ inline r32 MagnitudeSqr(Vec2 A)
 
 inline void Normalize(Vec2* A)
 {
-	r32 magnitude = sqrt(MagnitudeSqr(*A));
+	r32 magnitude = (r32)sqrt(MagnitudeSqr(*A));
 	if (magnitude > 0.0f)
 	{
 		*A = *A / magnitude;

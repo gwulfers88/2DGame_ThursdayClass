@@ -1,30 +1,26 @@
-#include <fstream>
-#include <iostream>
-
-#if EMACS
-#include "..\deps\include\SDL\SDL_image.h"
-#else
-#include <SDL_image.h>
-#endif
-
 #include "GameObject.h"
 #include "Manager.h"
+#include <fstream>
+#include <iostream>
+#include <SDL_image.h>
 
 GameObject::GameObject(void)
-    : target(0)
-    , active(true)
-    , surf(nullptr)
-    , img(nullptr)
-    , angle(0)
-    , pos({0,0,0,0})
-    , position(0,0)
-    , velocity(0, 0)
-    , accel(0, 50)
-    , clip({ 0,0,0,0 })
-    , frame(0)
-    , prev(0)
-    , timer(0)
+	: target(0)
+	, active(true)
+	, surf(nullptr)
+	, img(nullptr)
+	, angle(0)
+	, pos({ 0,0,0,0 })
+	, position(0, 0)
+	, velocity(0, 0)
+	, accel(0, 50)
+	, clip({ 0,0,0,0 })
+	, frame(0)
+	, prev(0)
+	, timer(0)
+	, isControlled(false)
 {
+	
 }
 
 GameObject::~GameObject(void)
@@ -51,12 +47,38 @@ b32 GameObject::Update()
     timer += dt;
     prev = now;
 
+	Keys dashRight = { KEYS::RIGHT, KEYS::RIGHT, KEYS::LEFT, KEYS::RIGHT };
+	Keys dashLeft = { KEYS::LEFT, KEYS::LEFT, KEYS::RIGHT, KEYS::LEFT };
+
+	const Combos combos =
+	{
+		Combo(dashRight, "Dash Right"),
+		Combo(dashLeft, "Dash Left")
+	};
+
     if (!active)
         return false;
 
     angle += 100 * dt;
 
-    Vec2 dirToTarget = {0, 0};
+    Vec2 dirToTarget = {1, 0};
+
+	for ( const Combo& combo : combos )
+	{
+		const Keys& move = combo.first;
+		const string& action = combo.second;
+
+		if (Manager::match(Manager::inputHistory, move, 4))
+		{
+			Manager::inputHistory.clear();
+			cout << "move applied: " << action << endl;
+			break;
+		}
+		else
+		{
+			cout << "no moves applied: " << endl;
+		}
+	}
 
     OrbitTarget();
     UpdateAnimation();
@@ -82,13 +104,15 @@ void GameObject::OrbitTarget()
     float rotateAngle = (offset.th + angle) * (r32)M_PI / 180.0f;
 
     //HOMEWORK: Find targets pivot based on rotation.
-    Vec2 pivot = target->position + (Vec2(10, 10) * 0.5f);
+    Vec2 pivot = target->position - (Vec2(pos.w, pos.h) * 0.5f);
 
     Vec2 center;
     center.x = offset.r * cos(rotateAngle) + pivot.x;
     center.y = offset.r * sin(rotateAngle) + pivot.y;
+	
+	position = pivot;
 
-    position = center - (Vec2((r32)pos.w, (r32)pos.h) * 0.5f);
+    //position = center - (Vec2((r32)pos.w, (r32)pos.h) * 0.5f);
 }
 
 void GameObject::Render()
@@ -116,10 +140,34 @@ void GameObject::DebugRender()
 void GameObject::Move(i32 direction)
 {
     //Enter movement logic here
-    if (direction & KEYS::UP) {}
-    if (direction & KEYS::DOWN) {}
-    if (direction & KEYS::LEFT) {}
-    if (direction & KEYS::RIGHT) {}
+    if (direction & KEYS::UP)
+	{
+		if (isControlled)
+		{
+			Manager::inputHistory.push_back(direction);
+		}
+	}
+    if (direction & KEYS::DOWN)
+	{
+		if (isControlled)
+		{
+			Manager::inputHistory.push_back(direction);
+		}
+	}
+    if (direction & KEYS::LEFT)
+	{
+		if (isControlled)
+		{
+			Manager::inputHistory.push_back(direction);
+		}
+	}
+    if (direction & KEYS::RIGHT)
+	{
+		if (isControlled)
+		{
+			Manager::inputHistory.push_back(direction);
+		}
+	}
 }
 
 void GameObject::UpdateAnimation()

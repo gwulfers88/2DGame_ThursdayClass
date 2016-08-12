@@ -1,16 +1,8 @@
-#include <fstream>
-
-#if EMACS
-#include "..\deps\include\SDL\SDL_image.h"
-#else
-#include <SDL_image.h>
-#endif
-
-#include <stdio.h>
-
 #include "Manager.h"
-
+#include <fstream>
+#include <stdio.h>
 #include <sstream>
+#include <SDL_image.h>
 
 namespace
 {
@@ -31,6 +23,8 @@ namespace
 
 SDL_Window*     Manager::window = nullptr;
 SDL_Renderer*   Manager::renderer = nullptr;
+
+Keys Manager::inputHistory;
 
 Manager::Manager(void)
     : keys(KEYS::NONE)
@@ -128,6 +122,7 @@ b32 Manager::LoadLevel(std::string levelfile)
             if (!player)
             {
                 player = objs[name];
+				player->isControlled = true;
             }
 
             std::string meta;
@@ -152,19 +147,19 @@ b32 Manager::Update()
     
     if (keys & KEYS::UP)
     {
-        printf("UP\n");
+		//inputHistory.push_back(keys);
     }
     if (keys & KEYS::DOWN) 
     {
-        printf("DOWN\n");
+		//inputHistory.push_back(keys);
     }
     if (keys & KEYS::LEFT) 
     {
-        printf("LEFT\n");
+		//inputHistory.push_back(keys);
     }
     if (keys & KEYS::RIGHT) 
     {
-        printf("RIGHT\n");
+		//inputHistory.push_back(keys);
     }
 
     if (player)
@@ -199,6 +194,39 @@ b32 Manager::Update()
     SDL_RenderPresent( renderer );
 
     return true;
+}
+
+bool Manager::match(const Keys& input, const Keys& move, int threshold)
+{
+	int inputSize = input.size();
+	int moveSize = move.size();
+
+	if (inputSize < moveSize)
+		return false;
+
+	int mismatched = 0;
+
+	int i = inputSize - 1;
+	int j = moveSize - 1;
+
+	if (input[i] != move[j])
+		return false;
+
+	for (; i >= 0 && j >= 0; --i)
+	{
+		if (input[i] != move[j])
+			mismatched++;
+		else
+		{
+			mismatched = 0;
+			--j;
+		}
+
+		if (mismatched >= threshold)
+			return false;
+	}
+
+	return j >= 0;
 }
 
 void Manager::Close()

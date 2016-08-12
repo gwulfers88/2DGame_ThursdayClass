@@ -1,11 +1,6 @@
-#if EMACS
-#include "..\deps\include\SDL\SDL.h"
-#else
-#include <SDL.h>
-#endif
-
-#include <unordered_map>
 #include "GameObject.h"
+#include <unordered_map>
+#include <SDL.h>
 
 #pragma once
 
@@ -34,6 +29,9 @@ public:
     static SDL_Window*      window;
     static SDL_Renderer*    renderer;
 
+	static Keys inputHistory;
+	static bool match(const Keys& input, const Keys& move, int threshold = 1);
+
 private:
     void ApplyMetadata(GameObject *object, std::string data);
     
@@ -48,7 +46,7 @@ private:
 
     i32      keys;
     Vec2 mouse_pos;
-    
+	
     std::string nextlevel;
     typedef std::unordered_map<std::string, GameObject*> ObjectByName;
     ObjectByName objs;
